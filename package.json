@@ -1,0 +1,18 @@
+{
+  "name": "color-randomizer",
+  "version": "1.0.0",
+  "description": "Aplicação de sorteio de cores para amigo secreto",
+  "main": "index.html",
+  "scripts": {
+    "build": "echo 'Build concluído - site estático pronto para deploy'",
+    "dev": "npx serve ."
+  },
+  "keywords": [
+    "color",
+    "randomizer",
+    "sorteio"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {}
+}

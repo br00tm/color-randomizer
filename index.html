@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sorteio de Cores</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.9em;
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        select {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+            margin-bottom: 20px;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .draw-btn {
+            background: #28a745;
+            color: white;
+        }
+
+        .draw-btn:hover:not(:disabled) {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .draw-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .result-section {
+            display: none;
+            text-align: center;
+            padding: 30px;
+            border-radius: 10px;
+            margin-top: 20px;
+            animation: slideDown 0.5s ease;
+        }
+
+        .result-section.show {
+            display: block;
+        }
+
+        .result-color {
+            font-size: 3em;
+            font-weight: bold;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .result-message {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+
+        .all-draws {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #eee;
+        }
+
+        .all-draws h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .draw-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+
+        .loading {
+            text-align: center;
+            color: #666;
+            padding: 20px;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #f5c6cb;
+        }
+
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #bee5eb;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Sorteio de Cores</h1>
+        <p class="subtitle">Escolha seu nome e descubra sua cor!</p>
+
+        <div id="errorMessage" class="error" style="display: none;"></div>
+        <div id="infoMessage" class="info" style="display: none;"></div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalDraws">0</div>
+                <div class="stat-label">Sorteios realizados</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="remainingColors">14</div>
+                <div class="stat-label">Cores disponíveis</div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <label for="nameSelect">Selecione seu nome:</label>
+            <select id="nameSelect">
+                <option value="">-- Escolha seu nome --</option>
+                <option value="Adelma">Adelma</option>
+                <option value="Adilma">Adilma</option>
+                <option value="Adilmeia">Adilmeia</option>
+                <option value="Davi">Davi</option>
+                <option value="Guilherme">Guilherme</option>
+                <option value="Iara">Iara</option>
+                <option value="Josué">Josué</option>
+                <option value="Lais">Lais</option>
+                <option value="Luis Fernando">Luis Fernando</option>
+                <option value="Luisa">Luisa</option>
+                <option value="Pedro">Pedro</option>
+                <option value="Renato">Renato</option>
+                <option value="Sara">Sara</option>
+                <option value="Vovô">Vovô</option>
+            </select>
+
+            <button class="draw-btn" id="drawBtn" onclick="drawColor()">
+                Sortear Minha Cor
+            </button>
+        </div>
+
+        <div class="result-section" id="resultSection">
+            <p class="result-message">Sua cor é:</p>
+            <div class="result-color" id="resultColor"></div>
+        </div>
+
+        <div class="all-draws">
+            <h2>Todos os Sorteios</h2>
+            <div id="drawsList">
+                <div class="loading">Carregando...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========================================
+        // CONFIGURAÇÃO DO SUPABASE
+        // SUBSTITUA ESTAS VARIÁVEIS PELAS SUAS CREDENCIAIS
+        // ========================================
+        const SUPABASE_URL = 'https://pgvvrbztspjdanlwpnwf.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBndnZyYnp0c3BqZGFubHdwbndmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ3NTE3NDEsImV4cCI6MjA4MDMyNzc0MX0.eZVM-2aou6erZdGRTe1LnWRjjQ2f8lxAhhJyxVHdO3M';
+
+        // Inicializar cliente Supabase
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Definição das cores com suas quantidades
+        const colorPool = [
+            { name: 'Preto', hex: '#000000', textColor: '#ffffff', count: 1 },
+            { name: 'Branco', hex: '#ffffff', textColor: '#000000', count: 1 },
+            { name: 'Marrom', hex: '#8B4513', textColor: '#ffffff', count: 1 },
+            { name: 'Vermelho', hex: '#e74c3c', textColor: '#ffffff', count: 1 },
+            { name: 'Azul', hex: '#3498db', textColor: '#ffffff', count: 2 },
+            { name: 'Verde', hex: '#2ecc71', textColor: '#ffffff', count: 2 },
+            { name: 'Laranja', hex: '#e67e22', textColor: '#ffffff', count: 2 },
+            { name: 'Rosa', hex: '#e91e63', textColor: '#ffffff', count: 1 },
+            { name: 'Roxo', hex: '#9b59b6', textColor: '#ffffff', count: 1 },
+            { name: 'Amarelo', hex: '#f1c40f', textColor: '#000000', count: 2 }
+        ];
+
+        let allDraws = [];
+
+        // Verificar se já sorteou
+        function hasAlreadyDrawn() {
+            return localStorage.getItem('hasDrawn') === 'true';
+        }
+
+        // Marcar como sorteado
+        function markAsDrawn() {
+            localStorage.setItem('hasDrawn', 'true');
+        }
+
+        // Mostrar mensagem de erro
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Mostrar mensagem informativa
+        function showInfo(message) {
+            const infoDiv = document.getElementById('infoMessage');
+            infoDiv.textContent = message;
+            infoDiv.style.display = 'block';
+        }
+
+        // Buscar todos os sorteios
+        async function fetchAllDraws() {
+            try {
+                const { data, error } = await supabase
+                    .from('color_draws')
+                    .select('*')
+                    .order('drawn_at', { ascending: true });
+
+                if (error) throw error;
+
+                allDraws = data || [];
+                updateStats();
+                renderDraws();
+            } catch (error) {
+                console.error('Erro ao buscar sorteios:', error);
+                document.getElementById('drawsList').innerHTML =
+                    '<div class="error">Erro ao carregar sorteios. Verifique a configuração do Supabase.</div>';
+            }
+        }
+
+        // Atualizar estatísticas
+        function updateStats() {
+            const totalDraws = allDraws.length;
+            const remainingColors = 14 - totalDraws;
+
+            document.getElementById('totalDraws').textContent = totalDraws;
+            document.getElementById('remainingColors').textContent = remainingColors;
+        }
+
+        // Renderizar lista de sorteios
+        function renderDraws() {
+            const drawsList = document.getElementById('drawsList');
+
+            if (allDraws.length === 0) {
+                drawsList.innerHTML = '<div class="loading">Nenhum sorteio realizado ainda.</div>';
+                return;
+            }
+
+            drawsList.innerHTML = allDraws.map(draw => {
+                const color = colorPool.find(c => c.name === draw.color_name);
+                return `
+                    <div class="draw-item" style="background-color: ${draw.color_hex}; color: ${color ? color.textColor : '#fff'}; ${draw.color_name === 'Branco' ? 'border: 2px solid #ddd;' : ''}">
+                        <span>${draw.person_name}</span>
+                        <span>${draw.color_name}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Obter cores disponíveis
+        function getAvailableColors() {
+            const usedColors = {};
+
+            // Contar cores já usadas
+            allDraws.forEach(draw => {
+                usedColors[draw.color_name] = (usedColors[draw.color_name] || 0) + 1;
+            });
+
+            // Criar array de cores disponíveis
+            const available = [];
+            colorPool.forEach(color => {
+                const used = usedColors[color.name] || 0;
+                const remaining = color.count - used;
+                for (let i = 0; i < remaining; i++) {
+                    available.push(color);
+                }
+            });
+
+            return available;
+        }
+
+        // Sortear cor
+        async function drawColor() {
+            const nameSelect = document.getElementById('nameSelect');
+            const selectedName = nameSelect.value;
+
+            // Validações
+            if (!selectedName) {
+                showError('Por favor, selecione seu nome!');
+                return;
+            }
+
+            // Verificar se já sorteou (localStorage)
+            if (hasAlreadyDrawn()) {
+                showError('Você já realizou seu sorteio!');
+                return;
+            }
+
+            // Verificar se o nome já sorteou (banco de dados)
+            const nameExists = allDraws.find(draw => draw.person_name === selectedName);
+            if (nameExists) {
+                showError(`O nome "${selectedName}" já realizou o sorteio!`);
+                markAsDrawn(); // Marcar para evitar tentativas
+                return;
+            }
+
+            // Verificar cores disponíveis
+            const availableColors = getAvailableColors();
+            if (availableColors.length === 0) {
+                showError('Todas as cores já foram sorteadas!');
+                return;
+            }
+
+            // Desabilitar botão
+            const drawBtn = document.getElementById('drawBtn');
+            drawBtn.disabled = true;
+            drawBtn.textContent = 'Sorteando...';
+
+            try {
+                // Sortear cor aleatória
+                const randomIndex = Math.floor(Math.random() * availableColors.length);
+                const selectedColor = availableColors[randomIndex];
+
+                // Salvar no banco de dados
+                const { data, error } = await supabase
+                    .from('color_draws')
+                    .insert([
+                        {
+                            person_name: selectedName,
+                            color_name: selectedColor.name,
+                            color_hex: selectedColor.hex
+                        }
+                    ])
+                    .select();
+
+                if (error) throw error;
+
+                // Marcar como sorteado
+                markAsDrawn();
+
+                // Mostrar resultado
+                const resultSection = document.getElementById('resultSection');
+                const resultColor = document.getElementById('resultColor');
+                resultColor.textContent = selectedColor.name;
+                resultColor.style.backgroundColor = selectedColor.hex;
+                resultColor.style.color = selectedColor.textColor;
+                if (selectedColor.name === 'Branco') {
+                    resultColor.style.border = '2px solid #ddd';
+                }
+                resultSection.classList.add('show');
+
+                // Atualizar lista
+                await fetchAllDraws();
+
+                // Mostrar mensagem
+                showInfo('Sorteio realizado com sucesso! Sua cor foi salva.');
+
+                // Desabilitar select
+                nameSelect.disabled = true;
+
+            } catch (error) {
+                console.error('Erro ao realizar sorteio:', error);
+                showError('Erro ao realizar sorteio. Tente novamente.');
+                drawBtn.disabled = false;
+                drawBtn.textContent = 'Sortear Minha Cor';
+            }
+        }
+
+        // Verificar configuração do Supabase
+        function checkSupabaseConfig() {
+            if (SUPABASE_URL === 'SUA_URL_DO_SUPABASE' || SUPABASE_ANON_KEY === 'SUA_CHAVE_ANONIMA_DO_SUPABASE') {
+                showError('Configure as credenciais do Supabase no arquivo index.html!');
+                document.getElementById('drawBtn').disabled = true;
+            }
+        }
+
+        // Inicializar
+        window.addEventListener('load', () => {
+            checkSupabaseConfig();
+            fetchAllDraws();
+
+            // Se já sorteou, desabilitar
+            if (hasAlreadyDrawn()) {
+                document.getElementById('drawBtn').disabled = true;
+                document.getElementById('drawBtn').textContent = 'Você já sorteou';
+                showInfo('Você já realizou seu sorteio!');
+            }
+        });
+
+        // Atualizar lista a cada 5 segundos
+        setInterval(fetchAllDraws, 5000);
+    </script>
+</body>
+</html>

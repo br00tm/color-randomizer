@@ -123,28 +123,6 @@
             margin-bottom: 10px;
         }
 
-        .all-draws {
-            margin-top: 30px;
-            padding-top: 30px;
-            border-top: 2px solid #eee;
-        }
-
-        .all-draws h2 {
-            color: #333;
-            margin-bottom: 20px;
-            font-size: 1.5em;
-        }
-
-        .draw-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 10px;
-            font-weight: bold;
-        }
-
         .loading {
             text-align: center;
             color: #666;
@@ -255,12 +233,6 @@
             <div class="result-color" id="resultColor"></div>
         </div>
 
-        <div class="all-draws">
-            <h2>Todos os Sorteios</h2>
-            <div id="drawsList">
-                <div class="loading">Carregando...</div>
-            </div>
-        </div>
     </div>
 
     <script>
@@ -317,7 +289,7 @@
             infoDiv.style.display = 'block';
         }
 
-        // Buscar todos os sorteios
+        // Buscar todos os sorteios (apenas para estatísticas)
         async function fetchAllDraws() {
             try {
                 const { data, error } = await supabase
@@ -329,11 +301,9 @@
 
                 allDraws = data || [];
                 updateStats();
-                renderDraws();
             } catch (error) {
                 console.error('Erro ao buscar sorteios:', error);
-                document.getElementById('drawsList').innerHTML =
-                    '<div class="error">Erro ao carregar sorteios. Verifique a configuração do Supabase.</div>';
+                showError('Erro ao carregar estatísticas.');
             }
         }
 
@@ -344,26 +314,6 @@
 
             document.getElementById('totalDraws').textContent = totalDraws;
             document.getElementById('remainingColors').textContent = remainingColors;
-        }
-
-        // Renderizar lista de sorteios
-        function renderDraws() {
-            const drawsList = document.getElementById('drawsList');
-
-            if (allDraws.length === 0) {
-                drawsList.innerHTML = '<div class="loading">Nenhum sorteio realizado ainda.</div>';
-                return;
-            }
-
-            drawsList.innerHTML = allDraws.map(draw => {
-                const color = colorPool.find(c => c.name === draw.color_name);
-                return `
-                    <div class="draw-item" style="background-color: ${draw.color_hex}; color: ${color ? color.textColor : '#fff'}; ${draw.color_name === 'Branco' ? 'border: 2px solid #ddd;' : ''}">
-                        <span>${draw.person_name}</span>
-                        <span>${draw.color_name}</span>
-                    </div>
-                `;
-            }).join('');
         }
 
         // Obter cores disponíveis
@@ -496,8 +446,8 @@
             }
         });
 
-        // Atualizar lista a cada 5 segundos
-        setInterval(fetchAllDraws, 5000);
+        // Atualizar estatísticas a cada 30 segundos
+        setInterval(fetchAllDraws, 30000);
     </script>
 </body>
 </html>

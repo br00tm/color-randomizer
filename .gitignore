@@ -27,3 +27,4 @@ Thumbs.db
 # Cloudflare
 .wrangler/
 wrangler.toml.local
+*.log

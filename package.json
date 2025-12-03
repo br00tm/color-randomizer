@@ -5,7 +5,8 @@
   "main": "index.html",
   "scripts": {
     "build": "echo 'Build concluído - site estático pronto para deploy'",
-    "dev": "npx serve ."
+    "dev": "npx serve .",
+    "deploy": "npx wrangler pages deploy"
   },
   "keywords": [
     "color",
